@@ -14,8 +14,8 @@ namespace ConstraintSatisfactionProblem
     {
         static void Main(string[] args)
         {
-            // MapCsp(null, new[] { 1, 2, 3 }, 16, 6);
-            EinsteinCsp();
+            MapCsp(42, new[] { 1, 2, 3, 4 }, 25, 20);
+            // EinsteinCsp();
         }
 
         internal static void SerializeResultsToJson(Dictionary<Point, int> result, MapColoringCsp mapColoringCsp)
@@ -54,20 +54,15 @@ namespace ConstraintSatisfactionProblem
 
         internal static void MapCsp(int? seed, int[] domain, int mapSize, int regionCount)
         {
-            var colorMapCsp = new MapColoringCsp(mapSize) { RandomGenerator = seed is null ? new Random() : new Random(seed ?? 0) };
+            var colorMapCsp = new MapColoringCsp(mapSize)
+            { RandomGenerator = seed is null ? new Random() : new Random(seed ?? 0) };
             colorMapCsp.ResetRegions(regionCount, domain);
 
-            var results = CspSolver.BacktrackingSearch(colorMapCsp);
+            var results = CspSolver.BacktrackingSearch(colorMapCsp, out var nodesVisited, out var timeDuration);
 
+            Console.WriteLine($"Nodes visited: {nodesVisited}");
+            Console.WriteLine($"Time duration: {timeDuration} ms");
             Console.WriteLine($"Found: {results.Count} results!");
-            foreach (var dictionary in results.Take(5))
-            {
-                foreach (var (key, value) in dictionary)
-                {
-                    Console.Write($"{key}={value},");
-                }
-                Console.WriteLine();
-            }
 
             if (results.Count <= 0) return;
             SerializeResultsToJson(results.First(), colorMapCsp);
@@ -77,7 +72,8 @@ namespace ConstraintSatisfactionProblem
         internal static void EinsteinCsp()
         {
             var einstein = new EinsteinCsp();
-            var result = CspSolver.BacktrackingSearch(einstein).First();
+            var result = CspSolver.BacktrackingSearch(einstein,
+                out var nodesVisited, out var timeDuration).First();
 
             foreach (var house in HouseExtension.Houses)
             {
@@ -90,8 +86,12 @@ namespace ConstraintSatisfactionProblem
                 {
                     Console.WriteLine(einsteinValue);
                 }
+
                 Console.WriteLine("\n\n");
             }
+
+            Console.WriteLine($"Nodes visited: {nodesVisited}");
+            Console.WriteLine($"Time duration: {timeDuration} ms");
         }
     }
 }
