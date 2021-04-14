@@ -127,7 +127,7 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
 
     public static class HouseExtension
     {
-        public static List<House> NearHouses(this House house)
+        public static List<House> NextTo(this House house)
         {
             var near = new List<House>();
             var left = house - 1;

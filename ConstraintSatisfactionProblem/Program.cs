@@ -1,86 +1,56 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
+using ConstraintSatisfactionProblem.CSP;
+using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 using ConstraintSatisfactionProblem.Problems.Einstein;
 using ConstraintSatisfactionProblem.Problems.MapColoring;
+using ConstraintSatisfactionProblem.Tools;
 using ConstraintSatisfactionProblem.Utils.Types;
 
 namespace ConstraintSatisfactionProblem
 {
-    class Programs
+    internal class Programs
     {
-        static void Main(string[] args)
+        internal static void Main(string[] args)
         {
-            MapCsp(42, new[] { 1, 2, 3, 4 }, 25, 20);
-            // EinsteinCsp();
+            MapCsp(new[] { 1, 2, 3, 4 }, 32, 20);
+            //EinsteinCsp();
         }
 
-        internal static void SerializeResultsToJson(Dictionary<Point, int> result, MapColoringCsp mapColoringCsp)
-        {
-            var res = result.Select(r => new { point = r.Key, color = r.Value }).ToArray();
-            var regs = res.Select(r => r.point).ToList();
-            var data = new
-            {
-                board = mapColoringCsp.MapSize,
-                regions = res.Select(r => r.point.ToArray()),
-                colors = res.Select(r => r.color),
-                connections = res
-                    .Select(
-                        r =>
-                            mapColoringCsp.RegionsToSerialize.First(x => x.Point == r.point)
-                                .Neighbors.Select(n => regs.IndexOf(n.Point)).ToArray())
-                    .ToArray()
-            };
-
-            var jsonData = JsonSerializer.Serialize(data);
-            File.WriteAllText("out.json", jsonData);
-        }
-
-        internal static void GenerateImage()
-        {
-            var info = new ProcessStartInfo
-            {
-                FileName = "python",
-                UseShellExecute = false,
-                Arguments = "generator.py out.json"
-            };
-
-            var process = Process.Start(info);
-            process?.WaitForExit(5000);
-        }
-
-        internal static void MapCsp(int? seed, int[] domain, int mapSize, int regionCount)
+        internal static void MapCsp(int[] domain, int mapSize, int regionCount, int? seed = null)
         {
             var colorMapCsp = new MapColoringCsp(mapSize)
-            { RandomGenerator = seed is null ? new Random() : new Random(seed ?? 0) };
+            { RandomGenerator = seed is null ? new Random() : new Random((int)seed) };
             colorMapCsp.ResetRegions(regionCount, domain);
 
-            var results = CspSolver.BacktrackingSearch(colorMapCsp, out var nodesVisited, out var timeDuration);
+            var solver = new CspSolver<Point, int>(
+                new FirstUnassigned<Point, int>(),
+                new OriginalOrder<Point, int>());
 
-            Console.WriteLine($"Nodes visited: {nodesVisited}");
-            Console.WriteLine($"Time duration: {timeDuration} ms");
-            Console.WriteLine($"Found: {results.Count} results!");
+            var benchResult = BenchmarkCsp.Benchmark(solver, colorMapCsp);
+            benchResult.Report();
 
-            if (results.Count <= 0) return;
-            SerializeResultsToJson(results.First(), colorMapCsp);
-            GenerateImage();
+            if (benchResult.FirstSolution is null) return;
+            MapCspSerializer.SerializeResultsToJson(benchResult.FirstSolution, colorMapCsp);
+            MapCspSerializer.GenerateImage();
         }
 
         internal static void EinsteinCsp()
         {
             var einstein = new EinsteinCsp();
-            var result = CspSolver.BacktrackingSearch(einstein,
-                out var nodesVisited, out var timeDuration).First();
+            var solver = new CspSolver<EinsteinValue, House>(
+                new FirstUnassigned<EinsteinValue, House>(),
+                new OriginalOrder<EinsteinValue, House>());
+
+            var benchResult = BenchmarkCsp.Benchmark(solver, einstein);
 
             foreach (var house in HouseExtension.Houses)
             {
                 Console.WriteLine("_____________________");
                 Console.WriteLine(house);
                 Console.WriteLine("_____________________");
-                foreach (var einsteinValue in result
+                foreach (var einsteinValue in benchResult.FirstSolution
                     .Where(r => r.Value == house)
                     .Select(r => r.Key))
                 {
@@ -90,8 +60,7 @@ namespace ConstraintSatisfactionProblem
                 Console.WriteLine("\n\n");
             }
 
-            Console.WriteLine($"Nodes visited: {nodesVisited}");
-            Console.WriteLine($"Time duration: {timeDuration} ms");
+            benchResult.Report();
         }
     }
 }

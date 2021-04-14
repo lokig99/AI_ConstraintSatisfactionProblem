@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ConstraintSatisfactionProblem.CSP;
+using ConstraintSatisfactionProblem.Utils.Maths;
 
 namespace ConstraintSatisfactionProblem.Problems.Einstein
 {
@@ -11,24 +13,14 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
         {
         }
 
-        public EinsteinVariable(EinsteinValue key, CspProblem<EinsteinValue, House> problem) : base(key, null, problem)
+        public EinsteinVariable(EinsteinValue key, CspProblem<EinsteinValue, House> problem) : base(key,
+            new List<House>() { House.First, House.Second, House.Third, House.Fourth, House.Fifth }, problem)
         {
-            Domain = new List<House>() { House.First, House.Second, House.Third, House.Fourth, House.Fifth };
-        }
-
-        public override IList<House> OrderDomainValues()
-        {
-            return Domain;
         }
     }
 
     public class EinsteinCsp : CspProblem<EinsteinValue, House>
     {
-        public override Variable<EinsteinValue, House> NextUnassigned()
-        {
-            return Variables.First(v => !v.Assigned);
-        }
-
         public EinsteinCsp()
         {
             // setup variables
@@ -38,7 +30,7 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             var white = new EinsteinVariable(EinsteinValue.White, this);
             var green = new EinsteinVariable(EinsteinValue.Green, this);
 
-            var norwegian = new EinsteinVariable(EinsteinValue.Norwegian, this);
+            var norwegian = new EinsteinVariable(EinsteinValue.Norwegian, new List<House> { House.First }, this);
             var dane = new EinsteinVariable(EinsteinValue.Dane, this);
             var englishman = new EinsteinVariable(EinsteinValue.Englishman, this);
             var german = new EinsteinVariable(EinsteinValue.German, this);
@@ -46,7 +38,7 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
 
             var water = new EinsteinVariable(EinsteinValue.Water, this);
             var tea = new EinsteinVariable(EinsteinValue.Tea, this);
-            var milk = new EinsteinVariable(EinsteinValue.Milk, this);
+            var milk = new EinsteinVariable(EinsteinValue.Milk, new List<House> { House.Third }, this);
             var beer = new EinsteinVariable(EinsteinValue.Beer, this);
             var coffee = new EinsteinVariable(EinsteinValue.Coffee, this);
 
@@ -64,19 +56,19 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
 
             Variables = new List<Variable<EinsteinValue, House>>
             {
-                yellow,
-                blue,
-                red,
-                white,
-                green,
                 norwegian,
+                milk,
+                blue,
+                green,
+                white,
+                yellow,
+                red,
                 dane,
                 englishman,
                 german,
                 swede,
                 water,
                 tea,
-                milk,
                 beer,
                 coffee,
                 cigar,
@@ -92,31 +84,42 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             };
 
             // setup riddle constraints
-
-            Constraints = new List<IConstraint>
+            Constraints = new List<BinaryConstraint<EinsteinValue, House>>
             {
-                new UniqueHouse(new List<Variable<EinsteinValue, House>> {yellow, blue, red, white, green}),
-                new UniqueHouse(new List<Variable<EinsteinValue, House>> {norwegian, dane, englishman, swede, german}),
-                new UniqueHouse(new List<Variable<EinsteinValue, House>> {water, tea, milk, beer, coffee}),
-                new UniqueHouse(new List<Variable<EinsteinValue, House>> {cigar, lights, noFilter, pipe, menthol}),
-                new UniqueHouse(new List<Variable<EinsteinValue, House>> {cat, horse, bird, dog, fish}),
                 // riddle hints
-                new ValueInHouse(norwegian, House.First), // 1st 
                 new InTheSameHouse(englishman, red), //2nd
                 new HouseOnTheLeft(white, green), //3rd
                 new InTheSameHouse(dane, tea), //4th
-                new HouseNear(lights, cat), //5th
+                new HouseNextTo(lights, cat), //5th
                 new InTheSameHouse(yellow, cigar), //6th
                 new InTheSameHouse(german, pipe), //7th
-                new ValueInHouse(milk, House.Third), //8th
-                new HouseNear(lights, water), //9th
+                new HouseNextTo(lights, water), //9th
                 new InTheSameHouse(noFilter, bird), //10th
                 new InTheSameHouse(swede, dog), //11th
-                new HouseNear(norwegian, blue), //12th
-                new HouseNear(horse, yellow), //13th
+                new HouseNextTo(norwegian, blue), //12th
+                new HouseNextTo(horse, yellow), //13th
                 new InTheSameHouse(menthol, beer), //14th
                 new InTheSameHouse(green, coffee) //15th
             };
+
+            // unique house constraints
+            var c = Constraints as List<BinaryConstraint<EinsteinValue, House>>;
+
+            // colors
+            c?.AddRange(MathCsp.Combinations(yellow, blue, red, green, white)
+                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            // nationalities
+            c?.AddRange(MathCsp.Combinations(german, norwegian, englishman, swede, dane)
+                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            // drinks
+            c?.AddRange(MathCsp.Combinations(milk, water, beer, coffee, tea)
+                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            // pets
+            c?.AddRange(MathCsp.Combinations(cat, dog, horse, fish, bird)
+                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            // smokes
+            c?.AddRange(MathCsp.Combinations(noFilter, menthol, pipe, cigar, lights)
+                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
         }
     }
 }

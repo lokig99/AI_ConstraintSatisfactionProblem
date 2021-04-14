@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ConstraintSatisfactionProblem.CSP;
 using ConstraintSatisfactionProblem.Utils.Interfaces;
 using ConstraintSatisfactionProblem.Utils.Types;
 
@@ -22,33 +23,17 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
         public RegionVariable(Point key, IList<int> domain, CspProblem<Point, int> problem) : base(key, domain, problem)
         {
         }
-
-        public override IList<int> OrderDomainValues()
-        {
-            return Domain;
-        }
     }
 
-    public class RegionConstraint : IConstraint
+    public class RegionConstraint : BinaryConstraint<Point, int>
     {
-        public Variable<Point, int> RegionOne { get; }
-        public Variable<Point, int> RegionTwo { get; }
-        public bool Evaluate()
+        protected override bool Test()
         {
-            if (!RegionOne.Assigned || !RegionTwo.Assigned) return true;
-            return RegionOne.Value != RegionTwo.Value;
+            return VariableOne.Value != VariableTwo.Value;
         }
 
-        public RegionConstraint(Variable<Point, int> regionOne, Variable<Point, int> regionTwo)
+        public RegionConstraint(Variable<Point, int> var1, Variable<Point, int> var2) : base(var1, var2)
         {
-            RegionOne = regionOne;
-            RegionTwo = regionTwo;
-        }
-
-        public RegionConstraint(IList<Variable<Point, int>> subset)
-        {
-            RegionOne = subset[0];
-            RegionTwo = subset[1];
         }
     }
 
@@ -56,16 +41,13 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
     {
         public int MapSize { get; set; }
         public Random RandomGenerator { get; set; } = new();
+
         public MapColoringCsp(int mapSize)
         {
             MapSize = mapSize;
         }
-        public List<Region> RegionsToSerialize { get; set; }
 
-        public override Variable<Point, int> NextUnassigned()
-        {
-            return Variables.First(v => !v.Assigned);
-        }
+        public List<Region> RegionsToSerialize { get; set; }
 
         public void ResetRegions(int regionCount, ICollection<int> domain)
         {
@@ -84,7 +66,7 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                 return new Point(x, y);
             }
 
-            (List<Variable<Point, int>>, List<IConstraint>) GenerateRegions()
+            (List<Variable<Point, int>>, List<BinaryConstraint<Point, int>>) GenerateRegions()
             {
                 var regions = new List<(Region region, LinkedList<Region> others)>(regionCount);
                 var tmpRegions = new List<Region>(regionCount);
@@ -145,8 +127,14 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                 }
 
                 var tmpConstraints = lines
-                    .Select(line => regionVariables.Where(v => v.Key == line.StartPoint || v.Key == line.EndPoint))
-                    .Select(subset => new RegionConstraint(subset.ToArray())).Cast<IConstraint>().ToList();
+                    .Select(line => new
+                    {
+                        first = regionVariables.First(v => v.Key == line.StartPoint),
+                        second = regionVariables.First(v => v.Key == line.EndPoint)
+                    })
+                    .Select(pair => new RegionConstraint(pair.first, pair.second))
+                    .Cast<BinaryConstraint<Point, int>>()
+                    .ToList();
 
                 RegionsToSerialize = tmpRegions;
                 return (regionVariables, tmpConstraints);
