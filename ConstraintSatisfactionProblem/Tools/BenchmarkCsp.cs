@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ConstraintSatisfactionProblem.CSP;
+using ConstraintSatisfactionProblem.CSP.Solver;
 
 namespace ConstraintSatisfactionProblem.Tools
 {
@@ -11,11 +12,11 @@ namespace ConstraintSatisfactionProblem.Tools
         public readonly struct BenchmarkResult<TK, TD>
         {
             public BenchmarkResult(
-                long firstSolutionElapsedMilliseconds,
-                ulong firstSolutionNodesVisited,
-                long totalElapsedMilliseconds,
-                ulong totalNodesVisited,
-                ulong solutionsFound,
+                long? firstSolutionElapsedMilliseconds,
+                ulong? firstSolutionNodesVisited,
+                long? totalElapsedMilliseconds,
+                ulong? totalNodesVisited,
+                ulong? solutionsFound,
                 Dictionary<TK, TD> firstSolution)
             {
                 FirstSolutionElapsedMilliseconds = firstSolutionElapsedMilliseconds;
@@ -26,18 +27,23 @@ namespace ConstraintSatisfactionProblem.Tools
                 FirstSolution = firstSolution;
             }
 
-            public long FirstSolutionElapsedMilliseconds { get; }
-            public ulong FirstSolutionNodesVisited { get; }
-            public long TotalElapsedMilliseconds { get; }
-            public ulong TotalNodesVisited { get; }
-            public ulong SolutionsFound { get; }
+            public long? FirstSolutionElapsedMilliseconds { get; }
+            public ulong? FirstSolutionNodesVisited { get; }
+            public long? TotalElapsedMilliseconds { get; }
+            public ulong? TotalNodesVisited { get; }
+            public ulong? SolutionsFound { get; }
             public Dictionary<TK, TD> FirstSolution { get; }
 
             public void Report()
             {
-                Console.WriteLine("First solution:");
-                Console.WriteLine($"\tFirst solution found in: {FirstSolutionElapsedMilliseconds} ms");
-                Console.WriteLine($"\tNodes visited to find first solution: {FirstSolutionNodesVisited}");
+                if (FirstSolutionElapsedMilliseconds is not null && FirstSolutionNodesVisited is not null)
+                {
+                    Console.WriteLine("First solution:");
+                    Console.WriteLine($"\tFirst solution found in: {FirstSolutionElapsedMilliseconds} ms");
+                    Console.WriteLine($"\tNodes visited to find first solution: {FirstSolutionNodesVisited}");
+                }
+
+                if (TotalElapsedMilliseconds is null || TotalNodesVisited is null || SolutionsFound is null) return;
                 Console.WriteLine("All solutions:");
                 Console.WriteLine($"\tNodes visited: {TotalNodesVisited}");
                 Console.WriteLine($"\tTime duration: {TotalElapsedMilliseconds} ms");
@@ -45,32 +51,48 @@ namespace ConstraintSatisfactionProblem.Tools
             }
         }
 
-        public static BenchmarkResult<TK, TD> Benchmark<TK, TD>(
+        public static BenchmarkResult<TK, TD> BenchmarkAll<TK, TD>(
             CspSolver<TK, TD> cspSolver, CspProblem<TK, TD> problem)
         {
             var stopWatch = new Stopwatch();
-
-            // first solution
             problem.ClearAll();
+
+            stopWatch.Restart();
+            _ = cspSolver.FindSolutions(problem).Last();
+            stopWatch.Stop();
+
+            problem.ClearAll();
+
+            return new BenchmarkResult<TK, TD>(
+                null,
+                null,
+                stopWatch.ElapsedMilliseconds,
+                cspSolver.NodesVisited,
+                cspSolver.SolutionCount,
+                null);
+        }
+
+        public static BenchmarkResult<TK, TD> BenchmarkFirstOnly<TK, TD>(
+            CspSolver<TK, TD> cspSolver, CspProblem<TK, TD> problem)
+        {
+            var stopWatch = new Stopwatch();
+            problem.ClearAll();
+
             stopWatch.Start();
-            var first = cspSolver.BacktrackingSearch(problem).First();
+            var first = cspSolver.FindSolutions(problem).First();
             stopWatch.Stop();
 
             var firstNodesVisited = cspSolver.NodesVisited;
             var firstSolutionTime = stopWatch.ElapsedMilliseconds;
 
-            // all solutions
             problem.ClearAll();
-            stopWatch.Restart();
-            _ = cspSolver.BacktrackingSearch(problem).Last();
-            stopWatch.Stop();
 
             return new BenchmarkResult<TK, TD>(
                 firstSolutionTime,
                 firstNodesVisited,
-                stopWatch.ElapsedMilliseconds,
-                cspSolver.NodesVisited,
-                cspSolver.SolutionCount,
+                null,
+                null,
+                null,
                 first);
         }
     }

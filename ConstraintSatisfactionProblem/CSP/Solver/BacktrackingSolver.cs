@@ -1,32 +1,27 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
 using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 
-namespace ConstraintSatisfactionProblem.CSP
+namespace ConstraintSatisfactionProblem.CSP.Solver
 {
-    public class CspSolver<TK, TD>
+    public class BacktrackingSolver<TK, TD> : CspSolver<TK, TD>
     {
-        public ISelectVariableHeuristic<TK, TD> SelectVariableHeuristic { get; set; }
-        public IOrderDomainHeuristic<TK, TD> OrderDomainHeuristic { get; set; }
-        public ulong NodesVisited { get; private set; }
-        public ulong SolutionCount { get; private set; }
-
-        public CspSolver(ISelectVariableHeuristic<TK, TD> selectVariableHeuristic,
-            IOrderDomainHeuristic<TK, TD> orderDomainHeuristic)
+        public BacktrackingSolver(ISelectVariableHeuristic<TK, TD> selectVariableHeuristic,
+            IOrderDomainHeuristic<TK, TD> orderDomainHeuristic) : base(selectVariableHeuristic, orderDomainHeuristic)
         {
-            SelectVariableHeuristic = selectVariableHeuristic;
-            OrderDomainHeuristic = orderDomainHeuristic;
         }
 
-        public IEnumerable<Dictionary<TK, TD>> BacktrackingSearch(CspProblem<TK, TD> problem)
+        public override IEnumerable<Dictionary<TK, TD>> FindSolutions(CspProblem<TK, TD> problem)
+        {
+            return BacktrackingSearch(problem);
+        }
+
+        private IEnumerable<Dictionary<TK, TD>> BacktrackingSearch(CspProblem<TK, TD> problem)
         {
             NodesVisited = 0L;
             SolutionCount = 0L;
-            foreach (var assignment in Search().SkipLast(1))
+            foreach (var assignment in Search())
             {
                 yield return assignment;
             }
@@ -46,7 +41,7 @@ namespace ConstraintSatisfactionProblem.CSP
                         NodesVisited++;
                         variable.Value = value;
 
-                        if (problem.Consistent)
+                        if (variable.Consistent)
                         {
                             // try finding solution
                             foreach (var solution in Search().Where(s => s is not null))
