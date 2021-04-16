@@ -21,10 +21,14 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
         {
             NodesVisited = 0L;
             SolutionCount = 0L;
+
+
             foreach (var assignment in Search())
             {
                 yield return assignment;
             }
+
+
 
             IEnumerable<Dictionary<TK, TD>> Search()
             {
@@ -40,7 +44,6 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                     {
                         NodesVisited++;
                         variable.Value = value;
-
                         if (variable.Consistent)
                         {
                             // try finding solution
@@ -50,7 +53,7 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                             }
                         }
 
-                        variable.Clear();
+                        variable.Assigned = false;
                     }
 
                     yield return null;

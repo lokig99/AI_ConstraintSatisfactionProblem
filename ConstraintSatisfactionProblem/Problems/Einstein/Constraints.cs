@@ -4,11 +4,16 @@ using ConstraintSatisfactionProblem.CSP;
 
 namespace ConstraintSatisfactionProblem.Problems.Einstein
 {
+    public enum EinsteinConstraintType
+    {
+        UniqueHouse, InTheSameHouse, HouseOnTheLeft, HouseNextTo
+    }
+
     public class UniqueHouse : BinaryConstraint<EinsteinValue, House>
     {
-        protected override bool Test()
+        public override bool Test(House valueOfOne, House valueOfTwo)
         {
-            return VariableOne.Value != VariableTwo.Value;
+            return valueOfOne != valueOfTwo;
         }
 
         public UniqueHouse(Variable<EinsteinValue, House> var1, Variable<EinsteinValue, House> var2) :
@@ -19,9 +24,9 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
 
     public class InTheSameHouse : BinaryConstraint<EinsteinValue, House>
     {
-        protected override bool Test()
+        public override bool Test(House valueOfOne, House valueOfTwo)
         {
-            return VariableOne.Value == VariableTwo.Value;
+            return valueOfOne == valueOfTwo;
         }
 
         public InTheSameHouse(Variable<EinsteinValue, House> var1, Variable<EinsteinValue, House> var2) :
@@ -37,9 +42,22 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
         {
         }
 
-        protected override bool Test()
+        public override bool Test(House valueOfOne, House valueOfTwo)
         {
-            return VariableOne.Value.HouseOnItsLeft() == VariableTwo.Value;
+            return valueOfOne.HouseOnItsLeft() == valueOfTwo;
+        }
+    }
+
+    public class HouseOnTheRight : BinaryConstraint<EinsteinValue, House>
+    {
+        public HouseOnTheRight(Variable<EinsteinValue, House> var, Variable<EinsteinValue, House> varOnRight) :
+            base(var, varOnRight)
+        {
+        }
+
+        public override bool Test(House valueOfOne, House valueOfTwo)
+        {
+            return valueOfOne.HouseOnItsRight() == valueOfTwo;
         }
     }
 
@@ -50,9 +68,9 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
         {
         }
 
-        protected override bool Test()
+        public override bool Test(House valueOfOne, House valueOfTwo)
         {
-            return VariableOne.Value.NextTo().Contains(VariableTwo.Value);
+            return valueOfOne.NextTo().Contains(valueOfTwo);
         }
     }
 }

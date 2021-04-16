@@ -144,6 +144,12 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             return Enum.IsDefined(typeof(House), left) ? left : null;
         }
 
+        public static House? HouseOnItsRight(this House house)
+        {
+            var right = house + 1;
+            return Enum.IsDefined(typeof(House), right) ? right : null;
+        }
+
         public static readonly IReadOnlyList<House> Houses = new[]
         {
             House.First, House.Second, House.Third, House.Fourth, House.Fifth

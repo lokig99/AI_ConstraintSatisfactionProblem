@@ -10,10 +10,10 @@ namespace ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain
         {
             return variable.Domain
                 .OrderByDescending(d =>
-                    variable.SetValue(d).Constraints
-                        .Where(cv => !cv.v.Assigned)
-                        .Sum(cv => cv.v.Domain
-                            .Sum(d2 => cv.v.CheckConsistency(d2) ? 1 : 0)));
+                    variable.Constraints
+                        .Where(c => !c.VariableTwo.Assigned)
+                        .Sum(c => c.VariableTwo.Domain
+                            .Sum(d2 => c.Test(d, d2) ? 1 : 0)));
         }
     }
 }

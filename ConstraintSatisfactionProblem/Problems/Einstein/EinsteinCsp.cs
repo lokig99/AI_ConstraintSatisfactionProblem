@@ -88,38 +88,97 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             {
                 // riddle hints
                 new InTheSameHouse(englishman, red), //2nd
+                new InTheSameHouse(red, englishman),
+
                 new HouseOnTheLeft(white, green), //3rd
+                new HouseOnTheRight(green, white),
+
                 new InTheSameHouse(dane, tea), //4th
+                new InTheSameHouse(tea, dane),
+
                 new HouseNextTo(lights, cat), //5th
+                new HouseNextTo(cat, lights),
+
                 new InTheSameHouse(yellow, cigar), //6th
+                new InTheSameHouse(cigar, yellow),
+
                 new InTheSameHouse(german, pipe), //7th
+                new InTheSameHouse(pipe, german),
+
                 new HouseNextTo(lights, water), //9th
+                new HouseNextTo(water, lights),
+
                 new InTheSameHouse(noFilter, bird), //10th
+                new InTheSameHouse(bird, noFilter),
+
                 new InTheSameHouse(swede, dog), //11th
+                new InTheSameHouse(dog, swede),
+
                 new HouseNextTo(norwegian, blue), //12th
+                new HouseNextTo(blue, norwegian),
+
                 new HouseNextTo(horse, yellow), //13th
+                new HouseNextTo(yellow, horse),
+
                 new InTheSameHouse(menthol, beer), //14th
-                new InTheSameHouse(green, coffee) //15th
+                new InTheSameHouse(beer, menthol),
+
+                new InTheSameHouse(green, coffee), //15th
+                new InTheSameHouse(coffee, green)
             };
 
             // unique house constraints
             var c = Constraints as List<BinaryConstraint<EinsteinValue, House>>;
 
             // colors
-            c?.AddRange(MathCsp.Combinations(yellow, blue, red, green, white)
-                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            foreach (var (bc1, bc2) in MathCsp.Combinations(yellow, blue, red, green, white)
+                .Select(pair =>
+                    EinsteinBidirectionalConstraintFactory
+                        .CreateBidirectionalConstraints(pair.Item1, pair.Item2, EinsteinConstraintType.UniqueHouse)))
+            {
+                c?.Add(bc1);
+                c?.Add(bc2);
+            }
+
             // nationalities
-            c?.AddRange(MathCsp.Combinations(german, norwegian, englishman, swede, dane)
-                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            foreach (var (bc1, bc2) in MathCsp.Combinations(german, norwegian, englishman, swede, dane)
+                .Select(pair =>
+                    EinsteinBidirectionalConstraintFactory
+                        .CreateBidirectionalConstraints(pair.Item1, pair.Item2, EinsteinConstraintType.UniqueHouse)))
+            {
+                c?.Add(bc1);
+                c?.Add(bc2);
+            }
+
             // drinks
-            c?.AddRange(MathCsp.Combinations(milk, water, beer, coffee, tea)
-                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            foreach (var (bc1, bc2) in MathCsp.Combinations(milk, water, beer, coffee, tea)
+                .Select(pair =>
+                    EinsteinBidirectionalConstraintFactory
+                        .CreateBidirectionalConstraints(pair.Item1, pair.Item2, EinsteinConstraintType.UniqueHouse)))
+            {
+                c?.Add(bc1);
+                c?.Add(bc2);
+            }
+
             // pets
-            c?.AddRange(MathCsp.Combinations(cat, dog, horse, fish, bird)
-                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            foreach (var (bc1, bc2) in MathCsp.Combinations(cat, dog, horse, fish, bird)
+                .Select(pair =>
+                    EinsteinBidirectionalConstraintFactory
+                        .CreateBidirectionalConstraints(pair.Item1, pair.Item2, EinsteinConstraintType.UniqueHouse)))
+            {
+                c?.Add(bc1);
+                c?.Add(bc2);
+            }
+
             // smokes
-            c?.AddRange(MathCsp.Combinations(noFilter, menthol, pipe, cigar, lights)
-                .Select(pair => new UniqueHouse(pair.Item1, pair.Item2)));
+            foreach (var (bc1, bc2) in MathCsp.Combinations(noFilter, menthol, pipe, cigar, lights)
+                .Select(pair =>
+                    EinsteinBidirectionalConstraintFactory
+                        .CreateBidirectionalConstraints(pair.Item1, pair.Item2, EinsteinConstraintType.UniqueHouse)))
+            {
+                c?.Add(bc1);
+                c?.Add(bc2);
+            }
         }
     }
 }

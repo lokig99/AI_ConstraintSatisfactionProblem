@@ -38,8 +38,8 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                     var variable = problem.NextUnassigned(SelectVariableHeuristic);
                     var unassignedConnectedVars =
                         variable.Constraints
-                            .Where(vc => !vc.v.Assigned)
-                            .Select(vc => vc.v)
+                            .Where(c => !c.VariableTwo.Assigned)
+                            .Select(c => c.VariableTwo)
                             .ToArray();
 
                     foreach (var value in variable.OrderDomainValues(OrderDomainHeuristic))

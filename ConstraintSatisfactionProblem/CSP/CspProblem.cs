@@ -26,12 +26,12 @@ namespace ConstraintSatisfactionProblem.CSP
         }
 
         public BitArray DomainMask { get; private set; }
-        private LinkedList<BitArray> DomainMaskHistory { get; }
+        public LinkedList<BitArray> DomainMaskHistory { get; }
         public CspProblem<TK, TD> Problem { get; }
-        public IEnumerable<TD> Domain => Problem.GlobalDomain.Where((_, i) => DomainMask[i]);
-        public bool Assigned { get; private set; }
-        public IList<(BinaryConstraint<TK, TD> c, Variable<TK, TD> v)> Constraints { get; }
-        public bool Consistent => Constraints.All(cv => cv.c.Evaluate());
+        public IEnumerable<TD> Domain => Assigned ? new[] { Value } : Problem.GlobalDomain.Where((_, i) => DomainMask[i]);
+        public bool Assigned { get; set; }
+        public IList<BinaryConstraint<TK, TD>> Constraints { get; }
+        public bool Consistent => Constraints.All(c => c.Evaluate());
 
         public bool CheckConsistency(TD testedValue)
         {
@@ -40,34 +40,13 @@ namespace ConstraintSatisfactionProblem.CSP
             {
                 var prev = Value;
                 Value = testedValue;
-                result = Constraints.All(cv => cv.c.Evaluate());
+                result = Constraints.All(c => c.Evaluate());
                 Value = prev;
             }
             else
             {
                 Value = testedValue;
-                result = Constraints.All(cv => cv.c.Evaluate());
-                Clear();
-            }
-
-            return result;
-        }
-
-        /** this method does not change the current value **/
-        public int CountConsistent(TD testedValue)
-        {
-            int result;
-            if (Assigned)
-            {
-                var prev = Value;
-                Value = testedValue;
-                result = Constraints.Sum(cv => cv.c.Evaluate() ? 1 : 0);
-                Value = prev;
-            }
-            else
-            {
-                Value = testedValue;
-                result = Constraints.Sum(cv => cv.c.Evaluate() ? 1 : 0);
+                result = Constraints.All(c => c.Evaluate());
                 Clear();
             }
 
@@ -95,9 +74,9 @@ namespace ConstraintSatisfactionProblem.CSP
             return this;
         }
 
-        public Variable<TK, TD> RemoveFromDomain(params TD[] values)
+        public Variable<TK, TD> RemoveFromDomain(ICollection<TD> values)
         {
-            if (values.Length == 0)
+            if (!values.Any())
             {
                 DomainMaskHistory.AddLast(DomainMask);
                 return this;
@@ -121,11 +100,23 @@ namespace ConstraintSatisfactionProblem.CSP
             return true;
         }
 
+        public bool RestorePreviousDomain(int offset)
+        {
+            if (offset < 0) return false;
+
+            for (var i = 0; i < offset; i++)
+            {
+                DomainMaskHistory.RemoveLast();
+            }
+
+            return RestorePreviousDomain();
+        }
+
         protected Variable(TK key, ICollection<TD> domain, CspProblem<TK, TD> problem)
         {
             Key = key;
             Problem = problem;
-            Constraints = new List<(BinaryConstraint<TK, TD> c, Variable<TK, TD> v)>();
+            Constraints = new List<BinaryConstraint<TK, TD>>();
             DomainMaskHistory = new LinkedList<BitArray>();
 
             foreach (var d in domain)
@@ -136,6 +127,11 @@ namespace ConstraintSatisfactionProblem.CSP
 
             var mask = Problem.GlobalDomain.Select(domain.Contains).ToArray();
             DomainMask = new BitArray(mask);
+        }
+
+        public override string ToString()
+        {
+            return $"{Key} => {(Assigned ? Value : null)}";
         }
     }
 
@@ -149,22 +145,32 @@ namespace ConstraintSatisfactionProblem.CSP
         public Variable<TK, TD> VariableOne { get; }
         public Variable<TK, TD> VariableTwo { get; }
 
+        // directed constraint: var1 -> var2
         protected BinaryConstraint(Variable<TK, TD> var1, Variable<TK, TD> var2)
         {
             VariableOne = var1;
             VariableTwo = var2;
 
-            VariableOne.Constraints.Add((this, VariableTwo));
-            VariableTwo.Constraints.Add((this, VariableOne));
+            VariableOne.Constraints.Add(this);
         }
 
-        protected abstract bool Test();
+        public bool Test()
+        {
+            return Test(VariableOne.Value, VariableTwo.Value);
+        }
+
+        public abstract bool Test(TD valueOfOne, TD valueOfTwo);
 
         public sealed override bool Evaluate()
         {
             if (!VariableOne.Domain.Any() || !VariableTwo.Domain.Any()) return false;
             if (!VariableOne.Assigned || !VariableTwo.Assigned) return true;
             return Test();
+        }
+
+        public override string ToString()
+        {
+            return $"({VariableOne}) => ({VariableTwo})";
         }
     }
 

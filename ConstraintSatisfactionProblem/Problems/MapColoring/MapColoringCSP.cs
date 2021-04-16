@@ -27,9 +27,9 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
 
     public class RegionConstraint : BinaryConstraint<Point, int>
     {
-        protected override bool Test()
+        public override bool Test(int valueOfOne, int valueOfTwo)
         {
-            return VariableOne.Value != VariableTwo.Value;
+            return valueOfOne != valueOfTwo;
         }
 
         public RegionConstraint(Variable<Point, int> var1, Variable<Point, int> var2) : base(var1, var2)
@@ -55,9 +55,9 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                 throw new ArgumentOutOfRangeException(nameof(regionCount));
 
             var lines = new LinkedList<Line>();
-            var (vars, constraints) = GenerateRegions();
+            var (vars, cons) = GenerateRegions();
             Variables = vars;
-            Constraints = constraints;
+            Constraints = cons;
 
             Point DrawPoint()
             {
@@ -132,12 +132,20 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                         first = regionVariables.First(v => v.Key == line.StartPoint),
                         second = regionVariables.First(v => v.Key == line.EndPoint)
                     })
-                    .Select(pair => new RegionConstraint(pair.first, pair.second))
-                    .Cast<BinaryConstraint<Point, int>>()
-                    .ToList();
+                    .Select(pair =>
+                        MapColoringBidirectionalConstraintFactory.CreateBidirectionalConstraints(pair.first,
+                            pair.second));
+
+
+                var finalConstraints = new List<BinaryConstraint<Point, int>>();
+                foreach (var (bc1, bc2) in tmpConstraints)
+                {
+                    finalConstraints.Add(bc1);
+                    finalConstraints.Add(bc2);
+                }
 
                 RegionsToSerialize = tmpRegions;
-                return (regionVariables, tmpConstraints);
+                return (regionVariables, finalConstraints);
             }
         }
     }
