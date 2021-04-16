@@ -1,5 +1,5 @@
-﻿using System;
-using ConstraintSatisfactionProblem.CSP;
+﻿using ConstraintSatisfactionProblem.CSP;
+using System;
 
 namespace ConstraintSatisfactionProblem.Problems.Einstein
 {
@@ -13,12 +13,9 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             // constraint var1 -> var2
             var bc1 = constraintType switch
             {
-                EinsteinConstraintType.UniqueHouse =>
-                    new UniqueHouse(var1, var2) as BinaryConstraint<EinsteinValue, House>,
-                EinsteinConstraintType.HouseNextTo =>
-                    new HouseNextTo(var1, var2) as BinaryConstraint<EinsteinValue, House>,
-                EinsteinConstraintType.HouseOnTheLeft =>
-                    new HouseOnTheLeft(var1, var2) as BinaryConstraint<EinsteinValue, House>,
+                EinsteinConstraintType.UniqueHouse => new UniqueHouse(var1, var2),
+                EinsteinConstraintType.HouseNextTo => new HouseNextTo(var1, var2),
+                EinsteinConstraintType.HouseOnTheLeft => new HouseOnTheLeft(var1, var2),
                 EinsteinConstraintType.InTheSameHouse =>
                     new InTheSameHouse(var1, var2) as BinaryConstraint<EinsteinValue, House>,
                 _ => throw new ArgumentOutOfRangeException(nameof(constraintType), constraintType, null)
@@ -27,12 +24,9 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             // constraint var2 -> var1
             var bc2 = constraintType switch
             {
-                EinsteinConstraintType.UniqueHouse =>
-                    new UniqueHouse(var2, var1) as BinaryConstraint<EinsteinValue, House>,
-                EinsteinConstraintType.HouseNextTo =>
-                    new HouseNextTo(var2, var1) as BinaryConstraint<EinsteinValue, House>,
-                EinsteinConstraintType.HouseOnTheLeft =>
-                    new HouseOnTheLeft(var2, var1) as BinaryConstraint<EinsteinValue, House>,
+                EinsteinConstraintType.UniqueHouse => new UniqueHouse(var2, var1),
+                EinsteinConstraintType.HouseNextTo => new HouseNextTo(var2, var1),
+                EinsteinConstraintType.HouseOnTheLeft => new HouseOnTheLeft(var2, var1),
                 EinsteinConstraintType.InTheSameHouse =>
                     new InTheSameHouse(var2, var1) as BinaryConstraint<EinsteinValue, House>,
                 _ => throw new ArgumentOutOfRangeException(nameof(constraintType), constraintType, null)

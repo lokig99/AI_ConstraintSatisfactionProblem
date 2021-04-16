@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ConstraintSatisfactionProblem.CSP;
+﻿using ConstraintSatisfactionProblem.CSP;
 using ConstraintSatisfactionProblem.Utils.Interfaces;
 using ConstraintSatisfactionProblem.Utils.Types;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ConstraintSatisfactionProblem.Problems.MapColoring
 {

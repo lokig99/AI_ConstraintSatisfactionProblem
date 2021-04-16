@@ -1,6 +1,4 @@
-﻿using System;
-using ConstraintSatisfactionProblem.CSP;
-using ConstraintSatisfactionProblem.Problems.Einstein;
+﻿using ConstraintSatisfactionProblem.CSP;
 using ConstraintSatisfactionProblem.Utils.Types;
 
 namespace ConstraintSatisfactionProblem.Problems.MapColoring

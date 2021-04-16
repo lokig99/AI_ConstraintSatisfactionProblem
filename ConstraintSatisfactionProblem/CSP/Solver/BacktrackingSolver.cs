@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
 using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ConstraintSatisfactionProblem.CSP.Solver
 {

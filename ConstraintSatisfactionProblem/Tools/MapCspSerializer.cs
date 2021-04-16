@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using ConstraintSatisfactionProblem.Problems.MapColoring;
+using ConstraintSatisfactionProblem.Utils.Types;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using ConstraintSatisfactionProblem.Problems.MapColoring;
-using ConstraintSatisfactionProblem.Utils.Types;
 
 namespace ConstraintSatisfactionProblem.Tools
 {

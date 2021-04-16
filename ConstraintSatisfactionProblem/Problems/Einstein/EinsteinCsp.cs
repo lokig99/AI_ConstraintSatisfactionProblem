@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using ConstraintSatisfactionProblem.CSP;
+﻿using ConstraintSatisfactionProblem.CSP;
 using ConstraintSatisfactionProblem.Utils.Maths;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ConstraintSatisfactionProblem.Problems.Einstein
 {

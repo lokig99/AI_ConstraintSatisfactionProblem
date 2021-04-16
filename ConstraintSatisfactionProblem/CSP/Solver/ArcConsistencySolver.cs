@@ -1,9 +1,8 @@
-﻿using System;
+﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
-using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 
 namespace ConstraintSatisfactionProblem.CSP.Solver
 {
@@ -41,22 +40,25 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                 else
                 {
                     var variable = problem.NextUnassigned(SelectVariableHeuristic);
-                    var removals = Ac3(problem);
+                    var removals = Ac3(problem, out var isConsistent);
 
-                    foreach (var value in variable.OrderDomainValues(OrderDomainHeuristic))
+                    if (isConsistent)
                     {
-                        NodesVisited++;
-                        variable.Value = value;
-                        if (variable.Consistent)
+                        foreach (var value in variable.OrderDomainValues(OrderDomainHeuristic))
                         {
-                            // try finding solution
-                            foreach (var solution in Search().Where(s => s is not null))
+                            NodesVisited++;
+                            variable.Value = value;
+                            if (variable.Consistent)
                             {
-                                yield return solution;
+                                // try finding solution
+                                foreach (var solution in Search().Where(s => s is not null))
+                                {
+                                    yield return solution;
+                                }
                             }
-                        }
 
-                        variable.Assigned = false;
+                            variable.Assigned = false;
+                        }
                     }
 
                     foreach (var (v, removalCount) in removals)
@@ -69,41 +71,41 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
             }
         }
 
-        private Dictionary<Variable<TK, TD>, int> Ac3(CspProblem<TK, TD> problem)
+        private static Dictionary<Variable<TK, TD>, int> Ac3(CspProblem<TK, TD> problem, out bool isConsistent)
         {
             var queue = new LinkedList<BinaryConstraint<TK, TD>>(problem.Constraints);
-            var removalsCount = new Dictionary<Variable<TK, TD>, int>();
+            var removalsCounter = new Dictionary<Variable<TK, TD>, int>();
             while (queue.Any())
             {
                 var con = queue.First?.Value;
                 queue.RemoveFirst();
 
+                if (!RemoveInconsistentValues(con, out var emptyFound)) continue;
 
-                if (RemoveInconsistentValues(con))
+                if (emptyFound)
                 {
-                    foreach (var c in con.VariableOne.Constraints)
-                    {
-                        queue.AddLast(c);
-                    }
+                    isConsistent = false;
+                    return removalsCounter;
                 }
 
-
-                // if (v2.Assigned) continue;
-                // {
-                //     if (!RemoveInconsistentValues(con, v2, v1)) continue;
-                //     foreach (var (c, _) in v2.Constraints)
-                //     {
-                //         queue.AddLast(c);
-                //     }
-                // }
+                Debug.Assert(con?.VariableOne.Constraints != null, "con?.VariableOne.Constraints != null");
+                foreach (var c in con.VariableOne.Constraints)
+                {
+                    queue.AddLast(c);
+                }
             }
 
-            return removalsCount;
+            isConsistent = true;
+            return removalsCounter;
 
-            bool RemoveInconsistentValues(BinaryConstraint<TK, TD> c)
+            bool RemoveInconsistentValues(BinaryConstraint<TK, TD> c, out bool emptyDomainFound)
             {
                 var (v1, v2) = (c.VariableOne, c.VariableTwo);
-                if (v1.Assigned) return false;
+                if (v1.Assigned)
+                {
+                    emptyDomainFound = false;
+                    return false;
+                }
 
                 var removed = false;
                 var toRemove = new List<TD>();
@@ -115,10 +117,15 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                     removed = true;
                 }
 
-                if (!removed) return false;
+                if (!removed)
+                {
+                    emptyDomainFound = false;
+                    return false;
+                }
 
                 v1.RemoveFromDomain(toRemove);
-                removalsCount[v1] = removalsCount.GetValueOrDefault(v1, 0) + 1;
+                emptyDomainFound = !v1.Domain.Any();
+                removalsCounter[v1] = removalsCounter.GetValueOrDefault(v1, 0) + 1;
                 return true;
             }
         }

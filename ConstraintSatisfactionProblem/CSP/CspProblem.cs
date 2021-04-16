@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
-using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 
 namespace ConstraintSatisfactionProblem.CSP
 {
@@ -135,12 +135,12 @@ namespace ConstraintSatisfactionProblem.CSP
         }
     }
 
-    public abstract class Constraint<TK, TD>
+    public abstract class Constraint
     {
         public abstract bool Evaluate();
     }
 
-    public abstract class BinaryConstraint<TK, TD> : Constraint<TK, TD>
+    public abstract class BinaryConstraint<TK, TD> : Constraint
     {
         public Variable<TK, TD> VariableOne { get; }
         public Variable<TK, TD> VariableTwo { get; }

@@ -1,14 +1,12 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using ConstraintSatisfactionProblem.CSP;
-using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
 using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 using ConstraintSatisfactionProblem.CSP.Solver;
 using ConstraintSatisfactionProblem.Problems.Einstein;
 using ConstraintSatisfactionProblem.Problems.MapColoring;
 using ConstraintSatisfactionProblem.Tools;
 using ConstraintSatisfactionProblem.Utils.Types;
+using System;
+using System.Linq;
 
 namespace ConstraintSatisfactionProblem
 {
@@ -23,28 +21,36 @@ namespace ConstraintSatisfactionProblem
 
         internal static void Main(string[] args)
         {
-            MapCsp(new[] { 1, 2, 3, 4 }, 32, 25,
+            const int regionCount = 25;
+            const int seed = 42;
+            const int mapSize = 64;
+            var domain = new[] { 1, 2, 3, 4 };
+
+            MapCsp(domain, mapSize, regionCount,
                 new FailFirstHeuristic<Point, int>(),
                 new OriginalOrderHeuristic<Point, int>(),
-                SolverType.Ac3, 42);
-            MapCsp(new[] { 1, 2, 3, 4 }, 32, 25,
-                new FirstUnassignedHeuristic<Point, int>(),
+                SolverType.Ac3, seed);
+            MapCsp(domain, mapSize, regionCount,
+                new DegreeHeuristic<Point, int>(),
                 new OriginalOrderHeuristic<Point, int>(),
-                SolverType.Backtracking, 42);
-            MapCsp(new[] { 1, 2, 3, 4 }, 32, 25,
+                SolverType.Backtracking, seed);
+
+            MapCsp(domain, mapSize, regionCount,
                 new FailFirstHeuristic<Point, int>(),
                 new OriginalOrderHeuristic<Point, int>(),
-                SolverType.ForwardChecking, 42);
+                SolverType.ForwardChecking, seed);
 
             Console.WriteLine("\n__________________________________________\n");
             EinsteinCsp(
                 new FailFirstHeuristic<EinsteinValue, House>(),
                 new OriginalOrderHeuristic<EinsteinValue, House>(),
                 SolverType.Ac3, showResult: false);
+
             EinsteinCsp(
                 new FirstUnassignedHeuristic<EinsteinValue, House>(),
                 new OriginalOrderHeuristic<EinsteinValue, House>(),
                 SolverType.Backtracking, showResult: false);
+
             EinsteinCsp(
                 new FailFirstHeuristic<EinsteinValue, House>(),
                 new OriginalOrderHeuristic<EinsteinValue, House>(),
@@ -63,11 +69,9 @@ namespace ConstraintSatisfactionProblem
 
             var solver = solverType switch
             {
-                SolverType.Ac3 => new ArcConsistencySolver<Point, int>(selectVariable, orderDomain) as
-                    CspSolver<Point, int>,
-                SolverType.Backtracking => new BacktrackingSolver<Point, int>(selectVariable, orderDomain) as
-                    CspSolver<Point, int>,
-                _ => new ForwardCheckingSolver<Point, int>(selectVariable, orderDomain) as CspSolver<Point, int>
+                SolverType.Ac3 => new ArcConsistencySolver<Point, int>(selectVariable, orderDomain),
+                SolverType.Backtracking => new BacktrackingSolver<Point, int>(selectVariable, orderDomain),
+                _ => (CspSolver<Point, int>)new ForwardCheckingSolver<Point, int>(selectVariable, orderDomain)
             };
 
             var benchResult = BenchmarkCsp.BenchmarkFirstOnly(solver, colorMapCsp);
@@ -91,12 +95,10 @@ namespace ConstraintSatisfactionProblem
             var einstein = new EinsteinCsp();
             var solver = solverType switch
             {
-                SolverType.Ac3 => new ArcConsistencySolver<EinsteinValue, House>(selectVariable, orderDomain) as
-                    CspSolver<EinsteinValue, House>,
-                SolverType.Backtracking => new BacktrackingSolver<EinsteinValue, House>(selectVariable, orderDomain) as
-                    CspSolver<EinsteinValue, House>,
-                _ => new ForwardCheckingSolver<EinsteinValue, House>(selectVariable, orderDomain) as
-                    CspSolver<EinsteinValue, House>
+                SolverType.Ac3 => new ArcConsistencySolver<EinsteinValue, House>(selectVariable, orderDomain),
+                SolverType.Backtracking => new BacktrackingSolver<EinsteinValue, House>(selectVariable, orderDomain),
+                _ => (CspSolver<EinsteinValue, House>)new ForwardCheckingSolver<EinsteinValue, House>(selectVariable,
+                    orderDomain)
             };
 
             var benchResult = BenchmarkCsp.BenchmarkFirstOnly(solver, einstein);
@@ -123,7 +125,6 @@ namespace ConstraintSatisfactionProblem
             benchResult.Report();
             benchResult = BenchmarkCsp.BenchmarkAll(solver, einstein);
             benchResult.Report();
-
         }
     }
 }

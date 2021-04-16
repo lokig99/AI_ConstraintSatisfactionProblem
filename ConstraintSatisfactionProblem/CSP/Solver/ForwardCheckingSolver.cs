@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
 using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ConstraintSatisfactionProblem.CSP.Solver
 {
@@ -49,22 +49,32 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
 
                         if (variable.Consistent)
                         {
+                            var emptyDomainFound = false;
+                            var removals = new List<Variable<TK, TD>>();
                             // forward checking ->
                             // remove from Variables connected by constraints
                             // the values that are inconsistent with selected value
                             foreach (var v in unassignedConnectedVars)
                             {
                                 v.RemoveFromDomain(v.Domain.Where(d => !v.CheckConsistency(d)).ToArray());
+                                removals.Add(v);
+                                if (v.Domain.Any()) continue;
+                                emptyDomainFound = true;
+                                break;
                             }
 
-                            // try finding solution
-                            foreach (var solution in Search().Where(s => s is not null))
+                            if (emptyDomainFound) yield return null;
+                            else
                             {
-                                yield return solution;
+                                // try finding solution
+                                foreach (var solution in Search().Where(s => s is not null))
+                                {
+                                    yield return solution;
+                                }
                             }
 
                             // restore domains to previous state
-                            foreach (var v in unassignedConnectedVars)
+                            foreach (var v in removals)
                             {
                                 v.RestorePreviousDomain();
                             }
