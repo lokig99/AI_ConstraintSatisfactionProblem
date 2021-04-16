@@ -36,12 +36,6 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                 else
                 {
                     var variable = problem.NextUnassigned(SelectVariableHeuristic);
-                    var unassignedConnectedVars =
-                        variable.Constraints
-                            .Where(c => !c.VariableTwo.Assigned)
-                            .Select(c => c.VariableTwo)
-                            .ToArray();
-
                     foreach (var value in variable.OrderDomainValues(OrderDomainHeuristic))
                     {
                         NodesVisited++;
@@ -54,7 +48,9 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                             // forward checking ->
                             // remove from Variables connected by constraints
                             // the values that are inconsistent with selected value
-                            foreach (var v in unassignedConnectedVars)
+                            foreach (var v in variable.Constraints
+                                .Where(c => !c.VariableTwo.Assigned)
+                                .Select(c => c.VariableTwo))
                             {
                                 v.RemoveFromDomain(v.Domain.Where(d => !v.CheckConsistency(d)).ToArray());
                                 removals.Add(v);

@@ -108,12 +108,12 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                 }
 
                 var removed = false;
-                var toRemove = new List<TD>();
+                var toRemove = new LinkedList<TD>();
 
                 foreach (var d in v1.Domain)
                 {
                     if (v2.Domain.Any(d2 => c.Test(d, d2))) continue;
-                    toRemove.Add(d);
+                    toRemove.AddLast(d);
                     removed = true;
                 }
 

@@ -6,21 +6,19 @@ namespace ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable
     {
         public Variable<TK, TD> SelectVariable(CspProblem<TK, TD> problem)
         {
-            var unassigned = problem.UnassignedVariables.ToArray();
             var minRemaining = int.MaxValue;
-            var minRemainingIndex = -1;
+            Variable<TK, TD> failFirstVariable = null;
 
-            for (var i = 0; i < unassigned.Length; i++)
+            foreach (var variable in problem.UnassignedVariables)
             {
-                var variable = unassigned[i];
-                var domain = variable.Domain.ToArray();
-                if (domain.Length >= minRemaining) continue;
-                if (domain.Length == 0) return unassigned[i];
-                minRemaining = domain.Length;
-                minRemainingIndex = i;
+                var domainSize = variable.Domain.Count();
+                if (domainSize >= minRemaining) continue;
+                if (domainSize == 0) return variable;
+                minRemaining = domainSize;
+                failFirstVariable = variable;
             }
 
-            return unassigned[minRemainingIndex];
+            return failFirstVariable;
         }
     }
 }

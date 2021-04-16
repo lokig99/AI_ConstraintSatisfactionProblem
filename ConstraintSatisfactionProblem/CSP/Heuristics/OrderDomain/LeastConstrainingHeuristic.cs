@@ -12,7 +12,7 @@ namespace ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain
                     variable.Constraints
                         .Where(c => !c.VariableTwo.Assigned)
                         .Sum(c => c.VariableTwo.Domain
-                            .Sum(d2 => c.Test(d, d2) ? 1 : 0)));
+                            .Count(d2 => c.Test(d, d2))));
         }
     }
 }

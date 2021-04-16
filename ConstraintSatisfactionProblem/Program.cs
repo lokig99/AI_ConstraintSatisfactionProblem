@@ -34,7 +34,6 @@ namespace ConstraintSatisfactionProblem
                 new DegreeHeuristic<Point, int>(),
                 new OriginalOrderHeuristic<Point, int>(),
                 SolverType.Backtracking, seed);
-
             MapCsp(domain, mapSize, regionCount,
                 new FailFirstHeuristic<Point, int>(),
                 new OriginalOrderHeuristic<Point, int>(),
