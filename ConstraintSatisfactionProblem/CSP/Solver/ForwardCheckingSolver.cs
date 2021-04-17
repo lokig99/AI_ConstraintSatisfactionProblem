@@ -1,5 +1,4 @@
-﻿using System;
-using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
 using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 using System.Collections.Generic;
 using System.Linq;
