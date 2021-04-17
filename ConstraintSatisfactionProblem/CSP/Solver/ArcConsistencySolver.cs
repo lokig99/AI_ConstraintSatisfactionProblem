@@ -40,15 +40,17 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                 else
                 {
                     var variable = problem.NextUnassigned(SelectVariableHeuristic);
-                    var removals = Ac3(problem, out var isConsistent);
 
-                    if (isConsistent)
+
+                    foreach (var value in variable.OrderDomainValues(OrderDomainHeuristic))
                     {
-                        foreach (var value in variable.OrderDomainValues(OrderDomainHeuristic))
+                        NodesVisited++;
+                        variable.Value = value;
+                        if (variable.Consistent)
                         {
-                            NodesVisited++;
-                            variable.Value = value;
-                            if (variable.Consistent)
+                            var removals = Ac3(problem, out var isConsistent);
+
+                            if (isConsistent)
                             {
                                 // try finding solution
                                 foreach (var solution in Search().Where(s => s is not null))
@@ -57,13 +59,13 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                                 }
                             }
 
-                            variable.Assigned = false;
+                            foreach (var (v, removalCount) in removals)
+                            {
+                                v.RestorePreviousDomain(removalCount - 1);
+                            }
                         }
-                    }
 
-                    foreach (var (v, removalCount) in removals)
-                    {
-                        v.RestorePreviousDomain(removalCount - 1);
+                        variable.Assigned = false;
                     }
 
                     yield return null;
@@ -101,6 +103,7 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
             bool RemoveInconsistentValues(BinaryConstraint<TK, TD> c, out bool emptyDomainFound)
             {
                 var (v1, v2) = (c.VariableOne, c.VariableTwo);
+
                 if (v1.Assigned)
                 {
                     emptyDomainFound = false;

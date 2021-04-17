@@ -19,7 +19,7 @@ namespace ConstraintSatisfactionProblem
             Ac3
         }
 
-        internal static void Main(string[] args)
+        internal static void Main()
         {
             const int regionCount = 25;
             const int seed = 42;
@@ -46,7 +46,7 @@ namespace ConstraintSatisfactionProblem
                 SolverType.Ac3, showResult: false);
 
             EinsteinCsp(
-                new FirstUnassignedHeuristic<EinsteinValue, House>(),
+                new FailFirstHeuristic<EinsteinValue, House>(),
                 new OriginalOrderHeuristic<EinsteinValue, House>(),
                 SolverType.Backtracking, showResult: false);
 

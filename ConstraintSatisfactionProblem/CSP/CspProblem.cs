@@ -3,6 +3,7 @@ using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ConstraintSatisfactionProblem.CSP
@@ -28,28 +29,23 @@ namespace ConstraintSatisfactionProblem.CSP
         public BitArray DomainMask { get; private set; }
         public LinkedList<BitArray> DomainMaskHistory { get; }
         public CspProblem<TK, TD> Problem { get; }
-        public IEnumerable<TD> Domain => Assigned ? new[] { Value } : Problem.GlobalDomain.Where((_, i) => DomainMask[i]);
+        private HashSet<TD> _cachedDomain;
+        public IEnumerable<TD> Domain => Assigned ? new[] { Value } : _cachedDomain;
         public bool Assigned { get; set; }
+
         public IList<BinaryConstraint<TK, TD>> Constraints { get; }
         public bool Consistent => Constraints.All(c => c.Evaluate());
 
         public bool CheckConsistency(TD testedValue)
         {
-            bool result;
-            if (Assigned)
-            {
-                var prev = Value;
-                Value = testedValue;
-                result = Constraints.All(c => c.Evaluate());
-                Value = prev;
-            }
-            else
-            {
-                Value = testedValue;
-                result = Constraints.All(c => c.Evaluate());
-                Clear();
-            }
+            var prev = _value;
+            var prevAssigned = Assigned;
 
+            _value = testedValue;
+            Assigned = true;
+            var result = Constraints.All(c => c.Evaluate());
+            _value = prev;
+            Assigned = prevAssigned;
             return result;
         }
 
@@ -71,32 +67,39 @@ namespace ConstraintSatisfactionProblem.CSP
 
             DomainMask = DomainMaskHistory.First?.Value;
             DomainMaskHistory.Clear();
+            _cachedDomain = Problem.GlobalDomain.Where((_, i) => DomainMask[i]).ToHashSet();
             return this;
         }
 
         public Variable<TK, TD> RemoveFromDomain(ICollection<TD> values)
         {
-            if (!values.Any())
+            DomainMaskHistory.AddLast(DomainMask.Clone() as BitArray);
+
+            for (var i = 0; i < DomainMask.Count; i++)
             {
-                DomainMaskHistory.AddLast(DomainMask);
-                return this;
+                if (!values.Contains(Problem.GlobalDomain[i])) continue;
+                DomainMask.Set(i, false);
+                _cachedDomain.Remove(Problem.GlobalDomain[i]);
             }
 
-            DomainMaskHistory.AddLast(DomainMask.Clone() as BitArray);
-            var newMask = Problem.GlobalDomain
-                .Take(DomainMask.Count)
-                .Select(d => !values.Contains(d))
-                .ToArray();
-
-            DomainMask = DomainMask.And(new BitArray(newMask));
             return this;
         }
 
         public bool RestorePreviousDomain()
         {
             if (DomainMaskHistory.Count == 0) return false;
-            DomainMask = DomainMaskHistory.Last?.Value;
+
+            Debug.Assert(DomainMaskHistory.Last != null, "DomainMaskHistory.Last != null");
+            var prevDomainDiff = DomainMaskHistory.Last.Value.Xor(DomainMask);
             DomainMaskHistory.RemoveLast();
+
+            for (var i = 0; i < prevDomainDiff.Count; i++)
+            {
+                if (!prevDomainDiff[i]) continue;
+                DomainMask.Set(i, true);
+                _cachedDomain.Add(Problem.GlobalDomain[i]);
+            }
+
             return true;
         }
 
@@ -125,8 +128,18 @@ namespace ConstraintSatisfactionProblem.CSP
                 Problem.GlobalDomain.Add(d);
             }
 
-            var mask = Problem.GlobalDomain.Select(domain.Contains).ToArray();
+            var mask = new bool[Problem.GlobalDomain.Count];
+            _cachedDomain = new HashSet<TD>();
+            for (var i = 0; i < Problem.GlobalDomain.Count; i++)
+            {
+                var d = Problem.GlobalDomain[i];
+                mask[i] = domain.Contains(d);
+                if (mask[i]) _cachedDomain.Add(d);
+            }
+
             DomainMask = new BitArray(mask);
+            Assigned = false;
+            problem.Variables.Add(this);
         }
 
         public override string ToString()
@@ -140,7 +153,7 @@ namespace ConstraintSatisfactionProblem.CSP
         public abstract bool Evaluate();
     }
 
-    public abstract class BinaryConstraint<TK, TD> : Constraint
+    public class BinaryConstraint<TK, TD> : Constraint
     {
         public Variable<TK, TD> VariableOne { get; }
         public Variable<TK, TD> VariableTwo { get; }
@@ -159,7 +172,10 @@ namespace ConstraintSatisfactionProblem.CSP
             return Test(VariableOne.Value, VariableTwo.Value);
         }
 
-        public abstract bool Test(TD valueOfOne, TD valueOfTwo);
+        public virtual bool Test(TD valueOfOne, TD valueOfTwo)
+        {
+            throw new NotImplementedException(nameof(Test));
+        }
 
         public sealed override bool Evaluate()
         {
@@ -179,11 +195,12 @@ namespace ConstraintSatisfactionProblem.CSP
         protected CspProblem()
         {
             GlobalDomain = new List<TD>();
+            Variables = new List<Variable<TK, TD>>();
         }
 
-        public IList<Variable<TK, TD>> Variables { get; set; }
+        public IList<Variable<TK, TD>> Variables { get; }
         public IEnumerable<Variable<TK, TD>> UnassignedVariables => Variables.Where(v => !v.Assigned);
-        public IList<BinaryConstraint<TK, TD>> Constraints { get; set; }
+        public IEnumerable<BinaryConstraint<TK, TD>> Constraints => Variables.SelectMany(v => v.Constraints);
         public Dictionary<TK, TD> Assignment => Variables.ToDictionary(v => v.Key, v => v.Value);
         public IList<TD> GlobalDomain { get; }
         public bool Consistent => Constraints.All(c => c.Evaluate());

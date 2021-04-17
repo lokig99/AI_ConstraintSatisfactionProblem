@@ -20,7 +20,7 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
 
     public class RegionVariable : Variable<Point, int>
     {
-        public RegionVariable(Point key, IList<int> domain, CspProblem<Point, int> problem) : base(key, domain, problem)
+        public RegionVariable(Point key, ICollection<int> domain, CspProblem<Point, int> problem) : base(key, domain, problem)
         {
         }
     }
@@ -55,9 +55,7 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                 throw new ArgumentOutOfRangeException(nameof(regionCount));
 
             var lines = new LinkedList<Line>();
-            var (vars, cons) = GenerateRegions();
-            Variables = vars;
-            Constraints = cons;
+            GenerateRegions();
 
             Point DrawPoint()
             {
@@ -66,7 +64,8 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                 return new Point(x, y);
             }
 
-            (List<Variable<Point, int>>, List<BinaryConstraint<Point, int>>) GenerateRegions()
+
+            void GenerateRegions()
             {
                 var regions = new List<(Region region, LinkedList<Region> others)>(regionCount);
                 var tmpRegions = new List<Region>(regionCount);
@@ -126,7 +125,7 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                     regionVariables.Add(new RegionVariable(region.Point, tmpDomain, this));
                 }
 
-                var tmpConstraints = lines
+                _ = lines
                     .Select(line => new
                     {
                         first = regionVariables.First(v => v.Key == line.StartPoint),
@@ -134,18 +133,10 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                     })
                     .Select(pair =>
                         MapColoringBidirectionalConstraintFactory.CreateBidirectionalConstraints(pair.first,
-                            pair.second));
-
-
-                var finalConstraints = new List<BinaryConstraint<Point, int>>();
-                foreach (var (bc1, bc2) in tmpConstraints)
-                {
-                    finalConstraints.Add(bc1);
-                    finalConstraints.Add(bc2);
-                }
+                            pair.second)).ToArray();
 
                 RegionsToSerialize = tmpRegions;
-                return (regionVariables, finalConstraints);
+
             }
         }
     }
