@@ -1,4 +1,5 @@
-﻿using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
+﻿using System;
+using ConstraintSatisfactionProblem.CSP.Heuristics.OrderDomain;
 using ConstraintSatisfactionProblem.CSP.Heuristics.SelectVariable;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,9 +53,13 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                                 .Where(c => !c.VariableTwo.Assigned)
                                 .Select(c => c.VariableTwo))
                             {
-                                v.RemoveFromDomain(v.Domain.Where(d => !v.CheckConsistency(d)).ToArray());
+                                var toRemove = v.Domain.Where(d => !v.CheckConsistency(d)).ToArray();
+                                if (!toRemove.Any()) continue;
+
+                                v.RemoveFromDomain(toRemove);
                                 removals.Add(v);
                                 if (v.Domain.Any()) continue;
+
                                 emptyDomainFound = true;
                                 break;
                             }
@@ -76,7 +81,7 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
                             }
                         }
 
-                        variable.Clear();
+                        variable.Assigned = false;
                     }
 
                     yield return null;

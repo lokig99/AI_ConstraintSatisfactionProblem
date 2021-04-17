@@ -101,6 +101,7 @@ namespace ConstraintSatisfactionProblem.CSP.Solver
             bool RemoveInconsistentValues(BinaryConstraint<TK, TD> c, out bool emptyDomainFound)
             {
                 var (v1, v2) = (c.VariableOne, c.VariableTwo);
+
                 if (v1.Assigned)
                 {
                     emptyDomainFound = false;

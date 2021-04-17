@@ -21,7 +21,7 @@ namespace ConstraintSatisfactionProblem
 
         internal static void Main(string[] args)
         {
-            const int regionCount = 25;
+            const int regionCount = 20;
             const int seed = 42;
             const int mapSize = 64;
             var domain = new[] { 1, 2, 3, 4 };

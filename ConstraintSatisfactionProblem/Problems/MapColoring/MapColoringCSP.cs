@@ -55,9 +55,7 @@ namespace ConstraintSatisfactionProblem.Problems.MapColoring
                 throw new ArgumentOutOfRangeException(nameof(regionCount));
 
             var lines = new LinkedList<Line>();
-            var (vars, cons) = GenerateRegions();
-            Variables = vars;
-            Constraints = cons;
+            GenerateRegions();
 
             Point DrawPoint()
             {

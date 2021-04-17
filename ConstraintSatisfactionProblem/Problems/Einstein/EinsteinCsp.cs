@@ -54,37 +54,8 @@ namespace ConstraintSatisfactionProblem.Problems.Einstein
             var dog = new EinsteinVariable(EinsteinValue.Dog, this);
             var fish = new EinsteinVariable(EinsteinValue.Fish, this);
 
-            Variables = new List<Variable<EinsteinValue, House>>
-            {
-                norwegian,
-                milk,
-                blue,
-                green,
-                white,
-                yellow,
-                red,
-                dane,
-                englishman,
-                german,
-                swede,
-                water,
-                tea,
-                beer,
-                coffee,
-                cigar,
-                lights,
-                noFilter,
-                pipe,
-                menthol,
-                cat,
-                horse,
-                bird,
-                dog,
-                fish,
-            };
-
             // setup riddle constraints
-            Constraints = new List<BinaryConstraint<EinsteinValue, House>>
+            _ = new BinaryConstraint<EinsteinValue, House>[]
             {
                 // riddle hints
                 new InTheSameHouse(englishman, red), //2nd
